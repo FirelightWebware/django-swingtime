@@ -15,6 +15,5 @@ setup(
     platforms=['any'],
     packages=[
         'swingtime',
-        'swingtime.conf'
     ],
 )
