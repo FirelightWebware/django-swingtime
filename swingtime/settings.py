@@ -9,7 +9,7 @@ TIMESLOT_TIME_FORMAT = getattr(
 # Used for creating start/end time form selectors as well as time slot grids.
 # Value should be datetime.timedelta value representing the incremental
 # differences between temporal options
-TIMESLOT_INTERVAL = (
+TIMESLOT_INTERVAL = getattr(
     settings, 'SWINGTIME_TIMESLOT_INTERVAL' , datetime.timedelta(minutes=15)
 )
 
@@ -26,24 +26,24 @@ TIMESLOT_START_TIME = (
 # 1:30am (01:30), in which case a value of datetime.timedelta(hours=10.5)
 # could be specified to indicate that the 1:30 represents the following date's
 # time and not the current date.
-TIMESLOT_END_TIME_DURATION = (
+TIMESLOT_END_TIME_DURATION = getattr(
     settings, 'SWINGTIME_TIMESLOT_END_TIME_DURATION',
     datetime.timedelta(hours=+8)
 )
 
 # Indicates a minimum value for the number grid columns to be shown in the time
 # slot table.
-TIMESLOT_MIN_COLUMNS = (settings, 'SWINGTIME_TIMESLOT_MIN_COLUMNS', 4)
+TIMESLOT_MIN_COLUMNS = getattr(settings, 'SWINGTIME_TIMESLOT_MIN_COLUMNS', 4)
 
 # Indicate the default length in time for a new occurrence, specifed by using
 # a datetime.timedelta object
-DEFAULT_OCCURRENCE_DURATION = (
+DEFAULT_OCCURRENCE_DURATION = getattr(
     settings, 'SWINGTIME_DEFAULT_OCCURRENCE_DURATION',
     datetime.timedelta(hours=+1)
 )
 
 # If not None, passed to the calendar module's setfirstweekday function.
-CALENDAR_FIRST_WEEKDAY = (settings, 'SWINGTIME_CALENDAR_FIRST_WEEKDAY', 6)
+CALENDAR_FIRST_WEEKDAY = getattr(settings, 'SWINGTIME_CALENDAR_FIRST_WEEKDAY', 6)
 
 # The event model to use if you created a custom one based on AbstractEvent
-EVENT_MODEL = (settings, 'SWINGTIME_EVENT_MODEL', 'swingtime.models.Event')
+EVENT_MODEL = getattr(settings, 'SWINGTIME_EVENT_MODEL', 'swingtime.models.Event')
