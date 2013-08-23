@@ -41,12 +41,12 @@ def get_occasion_model():
     try:
         app_label, model_name = swingtime_settings.OCCASION_MODEL.split('.')
     except ValueError:
-        raise ImproperlyConfigured("SWINGTIME_OCCASION_MODEL must be of the form"
-                                   " 'app_label.model_name'")
+        raise ImproperlyConfigured("SWINGTIME_OCCASION_MODEL must be of the "
+                                   " form 'app_label.model_name'")
     occasion_model = get_model(app_label, model_name)
     if occasion_model is None:
-        raise ImproperlyConfigured("SWINGTIME_OCCASION_MODEL refers to model '%s'"
-                                   " that has not been installed"
+        raise ImproperlyConfigured("SWINGTIME_OCCASION_MODEL refers to model "
+                                   "'%s' that has not been installed"
                                    % swingtime_settings.OCCASION_MODEL)
     return occasion_model
 
