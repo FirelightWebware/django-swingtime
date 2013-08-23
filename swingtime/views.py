@@ -7,7 +7,6 @@ from django.db import models
 from django.template.context import RequestContext
 from django.shortcuts import get_object_or_404, render
 
-from swingtime.models import Event, Occasion
 from swingtime import utils, forms
 from swingtime import settings as swingtime_settings
 
@@ -111,7 +110,7 @@ def occasion_view(
     form
         a form object for updating the occasion
     '''
-    occasion = get_object_or_404(Occasion, pk=pk, event__pk=event_pk)
+    occasion = get_object_or_404(utils.get_occasion_model(), pk=pk, event__pk=event_pk)
     if request.method == 'POST':
         form = form_class(request.POST, instance=occasion)
         if form.is_valid():
@@ -255,7 +254,8 @@ def year_view(request, year, template='swingtime/yearly_view.html', queryset=Non
 
     '''
     year = int(year)
-    queryset = queryset._clone() if queryset else Occasion.objects.select_related()
+    queryset = queryset._clone() if queryset else utils.get_occasion_model() \
+                                                      .objects.select_related()
     occasions = queryset.filter(
         models.Q(start_time__year=year) |
         models.Q(end_time__year=year)
@@ -316,7 +316,8 @@ def month_view(
 
     # TODO Whether to include those occasions that started in the previous
     # month but end in this month?
-    queryset = queryset._clone() if queryset else Occasion.objects.select_related()
+    queryset = queryset._clone() if queryset else utils.get_occasion_model() \
+                                                      .objects.select_related()
     occasions = queryset.filter(start_time__year=year, start_time__month=month)
 
     def start_day(o):
