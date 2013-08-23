@@ -11,7 +11,6 @@ from django.forms.extras.widgets import SelectDateWidget
 from dateutil import rrule
 from swingtime import settings as swingtime_settings
 from swingtime import utils
-from swingtime.models import *
 
 WEEKDAY_SHORT = (
     (7, _(u'Sun')),
@@ -96,9 +95,11 @@ ISO_WEEKDAYS_MAP = (
 )
 
 MINUTES_INTERVAL = swingtime_settings.TIMESLOT_INTERVAL.seconds // 60
-SECONDS_INTERVAL = utils.time_delta_total_seconds(swingtime_settings.DEFAULT_OCCASION_DURATION)
+SECONDS_INTERVAL = utils.time_delta_total_seconds(
+    swingtime_settings.DEFAULT_OCCASION_DURATION
+)
 
-#-------------------------------------------------------------------------------
+
 def timeslot_options(
     interval=swingtime_settings.TIMESLOT_INTERVAL,
     start_time=swingtime_settings.TIMESLOT_START_TIME,
@@ -123,7 +124,7 @@ def timeslot_options(
 
     return options
 
-#-------------------------------------------------------------------------------
+
 def timeslot_offset_options(
     interval=swingtime_settings.TIMESLOT_INTERVAL,
     start_time=swingtime_settings.TIMESLOT_START_TIME,
@@ -133,8 +134,8 @@ def timeslot_offset_options(
     '''
     Create a list of time slot options for use in swingtime forms.
 
-    The list is comprised of 2-tuples containing the number of seconds since the
-    start of the day and a 12-hour temporal representation of that offset.
+    The list is comprised of 2-tuples containing the number of seconds since
+    the start of the day and a 12-hour temporal representation of that offset.
 
     '''
     dt = datetime.combine(date.today(), time(0))
@@ -155,17 +156,15 @@ default_timeslot_options = timeslot_options()
 default_timeslot_offset_options = timeslot_offset_options()
 
 
-#===============================================================================
 class MultipleIntegerField(forms.MultipleChoiceField):
     '''
     A form field for handling multiple integers.
 
     '''
 
-    #---------------------------------------------------------------------------
     def __init__(self, choices, size=None, label=None, widget=None):
         if widget is None:
-            widget = forms.SelectMultiple(attrs={'size' : size or len(choices)})
+            widget = forms.SelectMultiple(attrs={'size': size or len(choices)})
         super(MultipleIntegerField, self).__init__(
             required=False,
             choices=choices,
@@ -173,19 +172,16 @@ class MultipleIntegerField(forms.MultipleChoiceField):
             widget=widget,
         )
 
-    #---------------------------------------------------------------------------
     def clean(self, value):
         return [int(i) for i in super(MultipleIntegerField, self).clean(value)]
 
 
-#===============================================================================
 class SplitDateTimeWidget(forms.MultiWidget):
     '''
     A Widget that splits datetime input into a SelectDateWidget for dates and
     Select widget for times.
 
     '''
-    #---------------------------------------------------------------------------
     def __init__(self, attrs=None):
         widgets = (
             SelectDateWidget(attrs=attrs),
@@ -193,7 +189,6 @@ class SplitDateTimeWidget(forms.MultiWidget):
         )
         super(SplitDateTimeWidget, self).__init__(widgets, attrs)
 
-    #---------------------------------------------------------------------------
     def decompress(self, value):
         if value:
             return [value.date(), value.time().replace(microsecond=0)]
@@ -201,7 +196,6 @@ class SplitDateTimeWidget(forms.MultiWidget):
         return [None, None]
 
 
-#===============================================================================
 class MultipleOccasionForm(forms.Form):
     day = forms.DateField(
         label=_(u'Date'),
@@ -261,16 +255,18 @@ class MultipleOccasionForm(forms.Form):
 
     # monthly  options
     month_option = forms.ChoiceField(
-        choices=(('on',_(u'On the')), ('each',_(u'Each:'))),
+        choices=(('on', _(u'On the')), ('each', _(u'Each:'))),
         initial='each',
         widget=forms.RadioSelect(),
         label=_(u'Monthly options')
     )
 
     month_ordinal = forms.IntegerField(widget=forms.Select(choices=ORDINAL))
-    month_ordinal_day = forms.IntegerField(widget=forms.Select(choices=WEEKDAY_LONG))
+    month_ordinal_day = forms.IntegerField(
+        widget=forms.Select(choices=WEEKDAY_LONG)
+    )
     each_month_day = MultipleIntegerField(
-        [(i,i) for i in range(1,32)],
+        [(i, i) for i in range(1, 32)],
         widget=forms.CheckboxSelectMultiple
     )
 
@@ -282,16 +278,20 @@ class MultipleOccasionForm(forms.Form):
     )
 
     is_year_month_ordinal = forms.BooleanField(required=False)
-    year_month_ordinal = forms.IntegerField(widget=forms.Select(choices=ORDINAL))
-    year_month_ordinal_day = forms.IntegerField(widget=forms.Select(choices=WEEKDAY_LONG))
+    year_month_ordinal = forms.IntegerField(
+        widget=forms.Select(choices=ORDINAL)
+    )
+    year_month_ordinal_day = forms.IntegerField(
+        widget=forms.Select(choices=WEEKDAY_LONG)
+    )
 
-    #---------------------------------------------------------------------------
     def __init__(self, *args, **kws):
         super(MultipleOccasionForm, self).__init__(*args, **kws)
         dtstart = self.initial.get('dtstart', None)
         if dtstart:
+            minute = ((dtstart.minute // MINUTES_INTERVAL) * MINUTES_INTERVAL)
             dtstart = dtstart.replace(
-                minute=((dtstart.minute // MINUTES_INTERVAL) * MINUTES_INTERVAL),
+                minute=minute,
                 second=0,
                 microsecond=0
             )
@@ -299,7 +299,8 @@ class MultipleOccasionForm(forms.Form):
             weekday = dtstart.isoweekday()
             ordinal = dtstart.day // 7
             ordinal = u'%d' % (-1 if ordinal > 3 else ordinal + 1,)
-            offset = (dtstart - datetime.combine(dtstart.date(), time(0))).seconds
+            offset = (dtstart - datetime.combine(dtstart.date(), time(0)))
+            offset = offset.seconds
 
             self.initial.setdefault('day', dtstart)
             self.initial.setdefault('week_days', u'%d' % weekday)
@@ -310,9 +311,9 @@ class MultipleOccasionForm(forms.Form):
             self.initial.setdefault('year_month_ordinal', ordinal)
             self.initial.setdefault('year_month_ordinal_day', u'%d' % weekday)
             self.initial.setdefault('start_time_delta', u'%d' % offset)
-            self.initial.setdefault('end_time_delta', u'%d' % (offset + SECONDS_INTERVAL,))
+            self.initial.setdefault('end_time_delta', u'%d' %
+                                    (offset + SECONDS_INTERVAL,))
 
-    #---------------------------------------------------------------------------
     def clean(self):
         day = datetime.combine(self.cleaned_data['day'], time(0))
         self.cleaned_data['start_time'] = day + timedelta(
@@ -325,7 +326,6 @@ class MultipleOccasionForm(forms.Form):
 
         return self.cleaned_data
 
-    #---------------------------------------------------------------------------
     def save(self, event):
         if self.cleaned_data['repeats'] == 'no':
             params = {}
@@ -340,7 +340,6 @@ class MultipleOccasionForm(forms.Form):
 
         return event
 
-    #---------------------------------------------------------------------------
     def _build_rrule_params(self):
         iso = ISO_WEEKDAYS_MAP
         data = self.cleaned_data
@@ -373,29 +372,27 @@ class MultipleOccasionForm(forms.Form):
                 params['byweekday'] = day(ordinal)
 
         elif params['freq'] != rrule.DAILY:
-            raise NotImplementedError(_(u'Unknown interval rule %s') % params['freq'])
+            raise NotImplementedError(
+                _(u'Unknown interval rule %s') % params['freq']
+            )
 
         return params
 
 
-#===============================================================================
 class EventForm(forms.ModelForm):
     '''
     A simple form for adding and updating Event attributes
 
     '''
 
-    #===========================================================================
     class Meta:
         model = utils.get_event_model()
 
-    #---------------------------------------------------------------------------
     def __init__(self, *args, **kws):
         super(EventForm, self).__init__(*args, **kws)
         self.fields['description'].required = False
 
 
-#===============================================================================
 class SingleOccasionForm(forms.ModelForm):
     '''
     A simple form for adding and updating single Occasion attributes
@@ -405,8 +402,5 @@ class SingleOccasionForm(forms.ModelForm):
     start_time = forms.DateTimeField(widget=SplitDateTimeWidget)
     end_time = forms.DateTimeField(widget=SplitDateTimeWidget)
 
-    #===========================================================================
     class Meta:
-        model = Occasion
-
-
+        model = utils.get_occasion_model()
