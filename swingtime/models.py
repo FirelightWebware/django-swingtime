@@ -57,19 +57,19 @@ class AbstractEvent(models.Model):
         rrule_params.setdefault('freq', rrule.DAILY)
 
         if 'count' not in rrule_params and 'until' not in rrule_params:
-            self.occasion_set.create(
+            self.occasions.create(
                 start_time=start_time, end_time=end_time)
         else:
             delta = end_time - start_time
             for ev in rrule.rrule(dtstart=start_time, **rrule_params):
-                self.occasion_set.create(start_time=ev, end_time=ev + delta)
+                self.occasions.create(start_time=ev, end_time=ev + delta)
 
     def upcoming_occasions(self):
         '''
         Return all occasions that are set to start on or after the current
         time.
         '''
-        return self.occasion_set.filter(start_time__gte=datetime.now())
+        return self.occasions.filter(start_time__gte=datetime.now())
 
     def next_occasion(self):
         '''
