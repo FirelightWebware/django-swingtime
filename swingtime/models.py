@@ -4,7 +4,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
-from django.contrib.auth.models import User
 from django.conf import settings
 
 from dateutil import rrule
@@ -61,9 +60,10 @@ class EventType(models.Model):
 
 
 #===============================================================================
-class Event(models.Model):
+class AbstractEvent(models.Model):
     '''
-    Container model for general metadata and associated ``Occurrence`` entries.
+    Abstract container model for general metadata and associated
+    ``Occurrence`` entries.
     '''
     title = models.CharField(_('title'), max_length=32)
     description = models.CharField(_('description'), max_length=100)
@@ -72,6 +72,7 @@ class Event(models.Model):
 
     #===========================================================================
     class Meta:
+        abstract = True
         verbose_name = _('event')
         verbose_name_plural = _('events')
         ordering = ('title', )
@@ -136,6 +137,10 @@ class Event(models.Model):
         return Occurrence.objects.daily_occurrences(dt=dt, event=self)
 
 
+class Event(AbstractEvent):
+    pass
+
+
 #===============================================================================
 class OccurrenceManager(models.Manager):
 
@@ -181,7 +186,8 @@ class Occurrence(models.Model):
     '''
     start_time = models.DateTimeField(_('start time'))
     end_time = models.DateTimeField(_('end time'))
-    event = models.ForeignKey(Event, verbose_name=_('event'), editable=False)
+    event = models.ForeignKey(Event, verbose_name=_('event'), editable=False,
+                              related_name='occurences')
     notes = generic.GenericRelation(Note, verbose_name=_('notes'))
 
     objects = OccurrenceManager()
