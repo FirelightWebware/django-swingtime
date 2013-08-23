@@ -1,10 +1,10 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime
 
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.db import models
-from django.conf import settings
+# from django.conf import settings
 
 from dateutil import rrule
 
@@ -16,8 +16,9 @@ __all__ = (
     'create_event'
 )
 
-#===============================================================================
+
 class Note(models.Model):
+
     '''
     A generic model for adding simple, arbitrary notes to other models such as
     ``Event`` or ``Occurrence``.
@@ -26,22 +27,21 @@ class Note(models.Model):
     note = models.TextField(_('note'))
     created = models.DateTimeField(_('created'), auto_now_add=True)
 
-    content_type = models.ForeignKey(ContentType, verbose_name=_('content type'))
+    content_type = models.ForeignKey(ContentType,
+                                     verbose_name=_('content type'))
     object_id = models.PositiveIntegerField(_('object id'))
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
-    #===========================================================================
     class Meta:
         verbose_name = _('note')
         verbose_name_plural = _('notes')
 
-    #---------------------------------------------------------------------------
     def __unicode__(self):
         return self.note
 
 
-#===============================================================================
 class EventType(models.Model):
+
     '''
     Simple ``Event`` classifcation.
 
@@ -49,18 +49,16 @@ class EventType(models.Model):
     abbr = models.CharField(_(u'abbreviation'), max_length=4, unique=True)
     label = models.CharField(_('label'), max_length=50)
 
-    #===========================================================================
     class Meta:
         verbose_name = _('event type')
         verbose_name_plural = _('event types')
 
-    #---------------------------------------------------------------------------
     def __unicode__(self):
         return self.label
 
 
-#===============================================================================
 class AbstractEvent(models.Model):
+
     '''
     Abstract container model for general metadata and associated
     ``Occurrence`` entries.
@@ -70,23 +68,19 @@ class AbstractEvent(models.Model):
     event_type = models.ForeignKey(EventType, verbose_name=_('event type'))
     notes = generic.GenericRelation(Note, verbose_name=_('notes'))
 
-    #===========================================================================
     class Meta:
         abstract = True
         verbose_name = _('event')
         verbose_name_plural = _('events')
         ordering = ('title', )
 
-    #---------------------------------------------------------------------------
     def __unicode__(self):
         return self.title
 
-    #---------------------------------------------------------------------------
     @models.permalink
     def get_absolute_url(self):
         return ('swingtime-event', [str(self.id)])
 
-    #---------------------------------------------------------------------------
     def add_occurrences(self, start_time, end_time, **rrule_params):
         '''
         Add one or more occurences to the event using a comparable API to
@@ -96,23 +90,24 @@ class AbstractEvent(models.Model):
         to ``rrule.DAILY``.
 
         Because ``rrule.rrule`` returns an iterator that can essentially be
-        unbounded, we need to slightly alter the expected behavior here in order
-        to enforce a finite number of occurrence creation.
+        unbounded, we need to slightly alter the expected behavior here in
+        order to enforce a finite number of occurrence creation.
 
-        If both ``count`` and ``until`` entries are missing from ``rrule_params``,
-        only a single ``Occurrence`` instance will be created using the exact
-        ``start_time`` and ``end_time`` values.
+        If both ``count`` and ``until`` entries are missing from
+        ``rrule_params``, only a single ``Occurrence`` instance will be created
+        using the exact ``start_time`` and ``end_time`` values.
         '''
+
         rrule_params.setdefault('freq', rrule.DAILY)
 
         if 'count' not in rrule_params and 'until' not in rrule_params:
-            self.occurrence_set.create(start_time=start_time, end_time=end_time)
+            self.occurrence_set.create(
+                start_time=start_time, end_time=end_time)
         else:
             delta = end_time - start_time
             for ev in rrule.rrule(dtstart=start_time, **rrule_params):
                 self.occurrence_set.create(start_time=ev, end_time=ev + delta)
 
-    #---------------------------------------------------------------------------
     def upcoming_occurrences(self):
         '''
         Return all occurrences that are set to start on or after the current
@@ -120,7 +115,6 @@ class AbstractEvent(models.Model):
         '''
         return self.occurrence_set.filter(start_time__gte=datetime.now())
 
-    #---------------------------------------------------------------------------
     def next_occurrence(self):
         '''
         Return the single occurrence set to start on or after the current time
@@ -129,7 +123,6 @@ class AbstractEvent(models.Model):
         upcoming = self.upcoming_occurrences()
         return upcoming and upcoming[0] or None
 
-    #---------------------------------------------------------------------------
     def daily_occurrences(self, dt=None):
         '''
         Convenience method wrapping ``Occurrence.objects.daily_occurrences``.
@@ -141,12 +134,10 @@ class Event(AbstractEvent):
     pass
 
 
-#===============================================================================
 class OccurrenceManager(models.Manager):
 
     use_for_related_fields = True
 
-    #---------------------------------------------------------------------------
     def daily_occurrences(self, dt=None, event=None):
         '''
         Returns a queryset of for instances that have any overlap with a
@@ -178,11 +169,11 @@ class OccurrenceManager(models.Manager):
         return qs.filter(event=event) if event else qs
 
 
-#===============================================================================
 class Occurrence(models.Model):
+
     '''
-    Represents the start end time for a specific occurrence of a master ``Event``
-    object.
+    Represents the start end time for a specific occurrence of a master
+    ``Event`` object.
     '''
     start_time = models.DateTimeField(_('start time'))
     end_time = models.DateTimeField(_('end time'))
@@ -192,37 +183,30 @@ class Occurrence(models.Model):
 
     objects = OccurrenceManager()
 
-    #===========================================================================
     class Meta:
         verbose_name = _('occurrence')
         verbose_name_plural = _('occurrences')
         ordering = ('start_time', 'end_time')
 
-    #---------------------------------------------------------------------------
     def __unicode__(self):
         return u'%s: %s' % (self.title, self.start_time.isoformat())
 
-    #---------------------------------------------------------------------------
     @models.permalink
     def get_absolute_url(self):
         return ('swingtime-occurrence', [str(self.event.id), str(self.id)])
 
-    #---------------------------------------------------------------------------
     def __cmp__(self, other):
         return cmp(self.start_time, other.start_time)
 
-    #---------------------------------------------------------------------------
     @property
     def title(self):
         return self.event.title
 
-    #---------------------------------------------------------------------------
     @property
     def event_type(self):
         return self.event.event_type
 
 
-#-------------------------------------------------------------------------------
 def create_event(
     title,
     event_type,
@@ -242,14 +226,16 @@ def create_event(
     Parameters
 
     ``event_type``
-        can be either an ``EventType`` object or 2-tuple of ``(abbreviation,label)``,
-        from which an ``EventType`` is either created or retrieved.
+        can be either an ``EventType`` object or 2-tuple of
+        ``(abbreviation,label)``, from which an ``EventType`` is either created
+        or retrieved.
 
     ``start_time``
         will default to the current hour if ``None``
 
     ``end_time``
-        will default to ``start_time`` plus swingtime_settings.DEFAULT_OCCURRENCE_DURATION
+        will default to ``start_time`` plus
+        swingtime_settings.DEFAULT_OCCURRENCE_DURATION
         hour if ``None``
 
     ``freq``, ``count``, ``rrule_params``
@@ -279,6 +265,7 @@ def create_event(
         microsecond=0
     )
 
-    end_time = end_time or start_time + swingtime_settings.DEFAULT_OCCURRENCE_DURATION
+    end_time = end_time or \
+               start_time + swingtime_settings.DEFAULT_OCCURRENCE_DURATION
     event.add_occurrences(start_time, end_time, **rrule_params)
     return event
