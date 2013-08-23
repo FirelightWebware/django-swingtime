@@ -8,6 +8,7 @@ from django.db import models
 
 from dateutil import rrule
 
+from . import settings as swingtime_settings
 from . import utils
 
 __all__ = (
@@ -245,7 +246,6 @@ def create_event(
         follow the ``dateutils`` API (see http://labix.org/python-dateutil)
 
     '''
-    from swingtime import settings as swingtime_settings
 
     if isinstance(event_type, tuple):
         event_type, created = EventType.objects.get_or_create(
