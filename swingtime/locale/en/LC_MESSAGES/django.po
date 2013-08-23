@@ -221,11 +221,11 @@ msgid "End time"
 msgstr ""
 
 #: forms.py:226
-msgid "Occurrences"
+msgid "Occasions"
 msgstr ""
 
 #: forms.py:231
-msgid "Total Occurrences"
+msgid "Total Occasions"
 msgstr ""
 
 #: forms.py:244
@@ -318,9 +318,9 @@ msgid "end time"
 msgstr ""
 
 #: models.py:191
-msgid "occurrence"
+msgid "occasion"
 msgstr ""
 
 #: models.py:192
-msgid "occurrences"
+msgid "occasions"
 msgstr ""

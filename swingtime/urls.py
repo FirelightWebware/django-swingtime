@@ -46,7 +46,7 @@ urlpatterns = patterns('',
 
     url(
         r'^events/(\d+)/(\d+)/$',
-        views.occurrence_view,
-        name='swingtime-occurrence'
+        views.occasion_view,
+        name='swingtime-occasion'
     ),
 )

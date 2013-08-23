@@ -32,6 +32,25 @@ def get_event_model():
     return event_model
 
 
+def get_occasion_model():
+    """
+    Returns the Occasion model that is active in this project.
+    """
+    from django.db.models import get_model
+
+    try:
+        app_label, model_name = swingtime_settings.OCCASION_MODEL.split('.')
+    except ValueError:
+        raise ImproperlyConfigured("SWINGTIME_OCCASION_MODEL must be of the form"
+                                   " 'app_label.model_name'")
+    occasion_model = get_model(app_label, model_name)
+    if occasion_model is None:
+        raise ImproperlyConfigured("SWINGTIME_OCCASION_MODEL refers to model '%s'"
+                                   " that has not been installed"
+                                   % swingtime_settings.OCCASION_MODEL)
+    return occasion_model
+
+
 def html_mark_safe(func):
     '''
     Decorator for functions return strings that should be treated as template
@@ -82,30 +101,30 @@ def css_class_cycler():
     )
 
 
-class BaseOccurrenceProxy(object):
+class BaseOccasionProxy(object):
     '''
     A simple wrapper class for handling the presentational aspects of an
-    ``Occurrence`` instance.
+    ``Occasion`` instance.
 
     '''
-    def __init__(self, occurrence, col):
+    def __init__(self, occasion, col):
         self.column = col
-        self._occurrence = occurrence
+        self._occasion = occasion
         self.event_class = ''
 
     def __getattr__(self, name):
-        return getattr(self._occurrence, name)
+        return getattr(self._occasion, name)
 
     def __unicode__(self):
         return self.title
 
 
-class DefaultOccurrenceProxy(BaseOccurrenceProxy):
+class DefaultOccasionProxy(BaseOccasionProxy):
 
     CONTINUATION_STRING = '^'
 
     def __init__(self, *args, **kws):
-        super(DefaultOccurrenceProxy, self).__init__(*args, **kws)
+        super(DefaultOccasionProxy, self).__init__(*args, **kws)
         link = '<a href="%s">%s</a>' % (
             self.get_absolute_url(),
             self.title
@@ -129,20 +148,20 @@ def create_timeslot_table(
     time_delta=swingtime_settings.TIMESLOT_INTERVAL,
     min_columns=swingtime_settings.TIMESLOT_MIN_COLUMNS,
     css_class_cycles=css_class_cycler,
-    proxy_class=DefaultOccurrenceProxy
+    proxy_class=DefaultOccasionProxy
 ):
     '''
     Create a grid-like object representing a sequence of times (rows) and
     columns where cells are either empty or reference a wrapper object for
     event occasions that overlap a specific time slot.
 
-    Currently, there is an assumption that if an occurrence has a ``start_time``
+    Currently, there is an assumption that if an occasion has a ``start_time``
     that falls with the temporal scope of the grid, then that ``start_time`` will
     also match an interval in the sequence of the computed row entries.
 
     * ``dt`` - a ``datetime.datetime`` instance or ``None`` to default to now
-    * ``items`` - a queryset or sequence of ``Occurrence`` instances. If
-      ``None``, default to the daily occurrences for ``dt``
+    * ``items`` - a queryset or sequence of ``Occasion`` instances. If
+      ``None``, default to the daily occasions for ``dt``
     * ``start_time`` - a ``datetime.time`` instance
     * ``end_time_delta`` - a ``datetime.timedelta`` instance
     * ``time_delta`` - a ``datetime.timedelta`` instance
@@ -150,12 +169,12 @@ def create_timeslot_table(
     * ``css_class_cycles`` - if not ``None``, a callable returning a dictionary
       keyed by desired ``EventType`` abbreviations with values that iterate over
       progressive CSS class names for the particular abbreviation.
-    * ``proxy_class`` - a wrapper class for accessing an ``Occurrence`` object.
+    * ``proxy_class`` - a wrapper class for accessing an ``Occasion`` object.
       This class should also expose ``event_type`` and ``event_type`` attrs, and
       handle the custom output via its __unicode__ method.
 
     '''
-    from swingtime.models import Occurrence
+    from swingtime.models import Occasion
     dt = dt or datetime.now()
     dtstart = datetime.combine(dt.date(), start_time)
     dtend = dtstart + end_time_delta
@@ -163,7 +182,7 @@ def create_timeslot_table(
     if isinstance(items, QuerySet):
         items = items._clone()
     elif not items:
-        items = Occurrence.objects.daily_occurrences(dt).select_related('event')
+        items = Occasion.objects.daily_occasions(dt).select_related('event')
 
     # build a mapping of timeslot "buckets"
     timeslots = dict()
@@ -172,7 +191,7 @@ def create_timeslot_table(
         timeslots[n] = {}
         n += time_delta
 
-    # fill the timeslot buckets with occurrence proxies
+    # fill the timeslot buckets with occasion proxies
     for item in sorted(items):
         if item.end_time <= dtstart:
             # this item began before the start of our schedle constraints
@@ -194,7 +213,7 @@ def create_timeslot_table(
 
         colkey = 0
         while 1:
-            # keep searching for an open column to place this occurrence
+            # keep searching for an open column to place this occasion
             if colkey not in timeslot:
                 proxy = proxy_class(item, colkey)
                 timeslot[colkey] = proxy
@@ -207,7 +226,7 @@ def create_timeslot_table(
 
                     # we might want to put a sanity check in here to ensure that
                     # we aren't trampling some other entry, but by virtue of
-                    # sorting all occurrence that shouldn't happen
+                    # sorting all occasion that shouldn't happen
                     row[colkey] = proxy
                     current += time_delta
                 break

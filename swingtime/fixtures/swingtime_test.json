@@ -80,7 +80,7 @@
     }, 
     {
         "pk": 6, 
-        "model": "swingtime.occurrence", 
+        "model": "swingtime.occasion", 
         "fields": {
             "start_time": "2008-12-11 15:15:00", 
             "event": 6, 
@@ -89,7 +89,7 @@
     }, 
     {
         "pk": 5, 
-        "model": "swingtime.occurrence", 
+        "model": "swingtime.occasion", 
         "fields": {
             "start_time": "2008-12-11 15:30:00", 
             "event": 5, 
@@ -98,7 +98,7 @@
     }, 
     {
         "pk": 1, 
-        "model": "swingtime.occurrence", 
+        "model": "swingtime.occasion", 
         "fields": {
             "start_time": "2008-12-11 16:00:00", 
             "event": 1, 
@@ -107,7 +107,7 @@
     }, 
     {
         "pk": 4, 
-        "model": "swingtime.occurrence", 
+        "model": "swingtime.occasion", 
         "fields": {
             "start_time": "2008-12-11 16:00:00", 
             "event": 4, 
@@ -116,7 +116,7 @@
     }, 
     {
         "pk": 3, 
-        "model": "swingtime.occurrence", 
+        "model": "swingtime.occasion", 
         "fields": {
             "start_time": "2008-12-11 16:15:00", 
             "event": 3, 
@@ -125,7 +125,7 @@
     }, 
     {
         "pk": 7, 
-        "model": "swingtime.occurrence", 
+        "model": "swingtime.occasion", 
         "fields": {
             "start_time": "2008-12-11 16:30:00", 
             "event": 7, 
@@ -134,7 +134,7 @@
     }, 
     {
         "pk": 2, 
-        "model": "swingtime.occurrence", 
+        "model": "swingtime.occasion", 
         "fields": {
             "start_time": "2008-12-11 17:15:00", 
             "event": 2, 

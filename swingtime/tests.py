@@ -84,7 +84,7 @@ class TableTest(TestCase):
                 else:
                     print >> out, cellfmt % '',
             print >> out, '|'
-            
+
         return out.getvalue()
 
     #---------------------------------------------------------------------------
@@ -127,11 +127,11 @@ class TableTest(TestCase):
 class NewEventFormTest(TestCase):
 
     fixtures = ['swingtime_test']
-    
+
     #---------------------------------------------------------------------------
     def test_new_event_simple(self):
-        from swingtime.forms import EventForm, MultipleOccurrenceForm
-        
+        from swingtime.forms import EventForm, MultipleOccasionForm
+
         data = dict(
             title='QWERTY',
             event_type='1',
@@ -145,15 +145,15 @@ class NewEventFormTest(TestCase):
             month_option='each',
             repeats='count',
             freq='2',
-            occurences='2',
+            occasions='2',
             month_ordinal='1'
         )
-        
+
         evt_form = EventForm(data)
-        occ_form = MultipleOccurrenceForm(data)
+        occ_form = MultipleOccasionForm(data)
         self.assertTrue(evt_form.is_valid(), evt_form.errors.as_text())
         self.assertTrue(occ_form.is_valid(), occ_form.errors.as_text())
-        
+
         self.assertEqual(
             occ_form.cleaned_data['start_time'],
             datetime(2008, 12, 11, 8),
@@ -172,11 +172,11 @@ def doc_tests():
         >>> e = Event.objects.create(title='Hello, world', description='Happy New Year', event_type=evt_types[0])
         >>> e
         <Event: Hello, world>
-        >>> e.add_occurrences(datetime(2008,1,1), datetime(2008,1,1,1), freq=rrule.YEARLY, count=7)
-        >>> e.occurrence_set.all()
-        [<Occurrence: Hello, world: 2008-01-01T00:00:00>, <Occurrence: Hello, world: 2009-01-01T00:00:00>, <Occurrence: Hello, world: 2010-01-01T00:00:00>, <Occurrence: Hello, world: 2011-01-01T00:00:00>, <Occurrence: Hello, world: 2012-01-01T00:00:00>, <Occurrence: Hello, world: 2013-01-01T00:00:00>, <Occurrence: Hello, world: 2014-01-01T00:00:00>]
+        >>> e.add_occasions(datetime(2008,1,1), datetime(2008,1,1,1), freq=rrule.YEARLY, count=7)
+        >>> e.occasion_set.all()
+        [<Occasion: Hello, world: 2008-01-01T00:00:00>, <Occasion: Hello, world: 2009-01-01T00:00:00>, <Occasion: Hello, world: 2010-01-01T00:00:00>, <Occasion: Hello, world: 2011-01-01T00:00:00>, <Occasion: Hello, world: 2012-01-01T00:00:00>, <Occasion: Hello, world: 2013-01-01T00:00:00>, <Occasion: Hello, world: 2014-01-01T00:00:00>]
         >>> e = create_event('Bicycle repairman', event_type=evt_types[2])
-        >>> e.occurrence_set.count()
+        >>> e.occasion_set.count()
         1
         >>> e = create_event(
         ...     'Something completely different',
@@ -186,9 +186,9 @@ def doc_tests():
         ...     byweekday=(rrule.TU, rrule.TH),
         ...     until=datetime(2008,12,31)
         ... )
-        >>> for o in e.occurrence_set.all():
+        >>> for o in e.occasion_set.all():
         ...     print o.start_time, o.end_time
-        ... 
+        ...
         2008-12-02 12:00:00 2008-12-02 13:00:00
         2008-12-04 12:00:00 2008-12-04 13:00:00
         2008-12-09 12:00:00 2008-12-09 13:00:00

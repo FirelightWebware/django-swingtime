@@ -7,7 +7,7 @@ from django.db import models
 from django.template.context import RequestContext
 from django.shortcuts import get_object_or_404, render
 
-from swingtime.models import Event, Occurrence
+from swingtime.models import Event, Occasion
 from swingtime import utils, forms
 from swingtime import settings as swingtime_settings
 
@@ -51,11 +51,11 @@ def event_view(
     pk,
     template='swingtime/event_detail.html',
     event_form_class=forms.EventForm,
-    recurrence_form_class=forms.MultipleOccurrenceForm
+    recurrence_form_class=forms.MultipleOccasionForm
 ):
     '''
     View an ``Event`` instance and optionally update either the event or its
-    occurrences.
+    occasions.
 
     Context parameters:
 
@@ -66,7 +66,7 @@ def event_view(
         a form object for updating the event
 
     recurrence_form
-        a form object for adding occurrences
+        a form object for adding occasions
     '''
     event = get_object_or_404(utils.get_event_model(), pk=pk)
     event_form = recurrence_form = None
@@ -93,34 +93,34 @@ def event_view(
 
 
 #-------------------------------------------------------------------------------
-def occurrence_view(
+def occasion_view(
     request,
     event_pk,
     pk,
-    template='swingtime/occurrence_detail.html',
-    form_class=forms.SingleOccurrenceForm
+    template='swingtime/occasion_detail.html',
+    form_class=forms.SingleOccasionForm
 ):
     '''
-    View a specific occurrence and optionally handle any updates.
+    View a specific occasion and optionally handle any updates.
 
     Context parameters:
 
-    occurrence
-        the occurrence object keyed by ``pk``
+    occasion
+        the occasion object keyed by ``pk``
 
     form
-        a form object for updating the occurrence
+        a form object for updating the occasion
     '''
-    occurrence = get_object_or_404(Occurrence, pk=pk, event__pk=event_pk)
+    occasion = get_object_or_404(Occasion, pk=pk, event__pk=event_pk)
     if request.method == 'POST':
-        form = form_class(request.POST, instance=occurrence)
+        form = form_class(request.POST, instance=occasion)
         if form.is_valid():
             form.save()
             return http.HttpResponseRedirect(request.path)
     else:
-        form = form_class(instance=occurrence)
+        form = form_class(instance=occasion)
 
-    return render(request, template, {'occurrence': occurrence, 'form': form})
+    return render(request, template, {'occasion': occasion, 'form': form})
 
 
 #-------------------------------------------------------------------------------
@@ -128,10 +128,10 @@ def add_event(
     request,
     template='swingtime/add_event.html',
     event_form_class=forms.EventForm,
-    recurrence_form_class=forms.MultipleOccurrenceForm
+    recurrence_form_class=forms.MultipleOccasionForm
 ):
     '''
-    Add a new ``Event`` instance and 1 or more associated ``Occurrence``s.
+    Add a new ``Event`` instance and 1 or more associated ``Occasion``s.
 
     Context parameters:
 
@@ -143,7 +143,7 @@ def add_event(
         a form object for updating the event
 
     recurrence_form
-        a form object for adding occurrences
+        a form object for adding occasions
 
     '''
     dtstart = None
@@ -248,15 +248,15 @@ def year_view(request, year, template='swingtime/yearly_view.html', queryset=Non
         year - 1
 
     by_month
-        a sorted list of (month, occurrences) tuples where month is a
-        datetime.datetime object for the first day of a month and occurrences
+        a sorted list of (month, occasions) tuples where month is a
+        datetime.datetime object for the first day of a month and occasions
         is a (potentially empty) list of values for that month. Only months
-        which have at least 1 occurrence is represented in the list
+        which have at least 1 occasion is represented in the list
 
     '''
     year = int(year)
-    queryset = queryset._clone() if queryset else Occurrence.objects.select_related()
-    occurrences = queryset.filter(
+    queryset = queryset._clone() if queryset else Occasion.objects.select_related()
+    occasions = queryset.filter(
         models.Q(start_time__year=year) |
         models.Q(end_time__year=year)
     )
@@ -270,7 +270,7 @@ def year_view(request, year, template='swingtime/yearly_view.html', queryset=Non
 
     return render(request, template, {
         'year': year,
-        'by_month': [(dt, list(o)) for dt,o in itertools.groupby(occurrences, group_key)],
+        'by_month': [(dt, list(o)) for dt,o in itertools.groupby(occasions, group_key)],
         'next_year': year + 1,
         'last_year': year - 1
 
@@ -295,7 +295,7 @@ def month_view(
 
     calendar
         a list of rows containing (day, items) cells, where day is the day of
-        the month integer and items is a (potentially empty) list of occurrence
+        the month integer and items is a (potentially empty) list of occasion
         for the day
 
     this_month
@@ -314,15 +314,15 @@ def month_view(
     last_day    = max(cal[-1])
     dtend       = datetime(year, month, last_day)
 
-    # TODO Whether to include those occurrences that started in the previous
+    # TODO Whether to include those occasions that started in the previous
     # month but end in this month?
-    queryset = queryset._clone() if queryset else Occurrence.objects.select_related()
-    occurrences = queryset.filter(start_time__year=year, start_time__month=month)
+    queryset = queryset._clone() if queryset else Occasion.objects.select_related()
+    occasions = queryset.filter(start_time__year=year, start_time__month=month)
 
     def start_day(o):
         return o.start_time.day
 
-    by_day = dict([(dt, list(o)) for dt,o in itertools.groupby(occurrences, start_day)])
+    by_day = dict([(dt, list(o)) for dt,o in itertools.groupby(occasions, start_day)])
     data = {
         'today':      datetime.now(),
         'calendar':   [[(d, by_day.get(d, [])) for d in row] for row in cal],
