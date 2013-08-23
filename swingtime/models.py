@@ -8,6 +8,8 @@ from django.db import models
 
 from dateutil import rrule
 
+from . import utils
+
 __all__ = (
     'Note',
     'EventType',
@@ -177,7 +179,8 @@ class Occurrence(models.Model):
     '''
     start_time = models.DateTimeField(_('start time'))
     end_time = models.DateTimeField(_('end time'))
-    event = models.ForeignKey(Event, verbose_name=_('event'), editable=False,
+    event = models.ForeignKey(swingtime_settings.EVENT_MODEL,
+                              verbose_name=_('event'), editable=False,
                               related_name='occurences')
     notes = generic.GenericRelation(Note, verbose_name=_('notes'))
 
@@ -250,7 +253,7 @@ def create_event(
             label=event_type[1]
         )
 
-    event = Event.objects.create(
+    event = utils.get_event_model().objects.create(
         title=title,
         description=description,
         event_type=event_type

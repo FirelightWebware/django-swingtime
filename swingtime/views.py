@@ -40,7 +40,8 @@ def event_listing(
     return render(
         request,
         template,
-        dict(extra_context, events=events or Event.objects.all())
+        dict(extra_context, events=events or \
+                            utils.get_event_model().objects.all())
     )
 
 
@@ -67,7 +68,7 @@ def event_view(
     recurrence_form
         a form object for adding occurrences
     '''
-    event = get_object_or_404(Event, pk=pk)
+    event = get_object_or_404(utils.get_event_model(), pk=pk)
     event_form = recurrence_form = None
     if request.method == 'POST':
         if '_update' in request.POST:

@@ -387,7 +387,7 @@ class EventForm(forms.ModelForm):
 
     #===========================================================================
     class Meta:
-        model = Event
+        model = utils.get_event_model()
 
     #---------------------------------------------------------------------------
     def __init__(self, *args, **kws):
