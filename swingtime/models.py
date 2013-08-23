@@ -1,10 +1,7 @@
 from datetime import datetime
 
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
 from django.db import models
-# from django.conf import settings
 
 from dateutil import rrule
 
@@ -16,6 +13,7 @@ __all__ = (
     'AbstractOccasion',
     'create_event'
 )
+
 
 class AbstractEvent(models.Model):
 

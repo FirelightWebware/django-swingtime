@@ -86,9 +86,8 @@ def month_boundaries(dt=None):
 
 def css_class_cycler():
     '''
-    Return a dictionary keyed by ``EventType`` abbreviations, whose values are an
-    iterable or cycle of CSS class names.
-
+    Return a dictionary keyed by ``EventType`` abbreviations, whose values are
+    an iterable or cycle of CSS class names.
     '''
     from swingtime.models import EventType
     return defaultdict(
@@ -156,8 +155,8 @@ def create_timeslot_table(
     event occasions that overlap a specific time slot.
 
     Currently, there is an assumption that if an occasion has a ``start_time``
-    that falls with the temporal scope of the grid, then that ``start_time`` will
-    also match an interval in the sequence of the computed row entries.
+    that falls with the temporal scope of the grid, then that ``start_time``
+    will also match an interval in the sequence of the computed row entries.
 
     * ``dt`` - a ``datetime.datetime`` instance or ``None`` to default to now
     * ``items`` - a queryset or sequence of ``Occasion`` instances. If
@@ -167,12 +166,11 @@ def create_timeslot_table(
     * ``time_delta`` - a ``datetime.timedelta`` instance
     * ``min_column`` - the minimum number of columns to show in the table
     * ``css_class_cycles`` - if not ``None``, a callable returning a dictionary
-      keyed by desired ``EventType`` abbreviations with values that iterate over
-      progressive CSS class names for the particular abbreviation.
+      keyed by desired ``EventType`` abbreviations with values that iterate
+      over progressive CSS class names for the particular abbreviation.
     * ``proxy_class`` - a wrapper class for accessing an ``Occasion`` object.
-      This class should also expose ``event_type`` and ``event_type`` attrs, and
-      handle the custom output via its __unicode__ method.
-
+      This class should also expose ``event_type`` and ``event_type`` attrs,
+      and handle the custom output via its __unicode__ method.
     '''
     from swingtime.models import Occasion
     dt = dt or datetime.now()
@@ -224,9 +222,9 @@ def create_timeslot_table(
                     if row is None:
                         break
 
-                    # we might want to put a sanity check in here to ensure that
-                    # we aren't trampling some other entry, but by virtue of
-                    # sorting all occasion that shouldn't happen
+                    # we might want to put a sanity check in here to ensure
+                    # that we aren't trampling some other entry, but by virtue
+                    # of sorting all occasion that shouldn't happen
                     row[colkey] = proxy
                     current += time_delta
                 break
