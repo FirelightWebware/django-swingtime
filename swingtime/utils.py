@@ -3,44 +3,60 @@ Common features and functions for swingtime
 
 '''
 from collections import defaultdict
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, timedelta
 import itertools
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models.query import QuerySet
 from django.utils.safestring import mark_safe
 
-from dateutil import rrule
-from swingtime.conf import settings as swingtime_settings
+from swingtime import settings as swingtime_settings
 
 
-#-------------------------------------------------------------------------------
+def get_event_model():
+    """
+    Returns the Event model that is active in this project.
+    """
+    from django.db.models import get_model
+
+    try:
+        app_label, model_name = swingtime_settings.EVENT_MODEL.split('.')
+    except ValueError:
+        raise ImproperlyConfigured("SWINGTIME_EVENT_MODEL must be of the form"
+                                   " 'app_label.model_name'")
+    event_model = get_model(app_label, model_name)
+    if event_model is None:
+        raise ImproperlyConfigured("SWINGTIME_EVENT_MODEL refers to model '%s'"
+                                   " that has not been installed"
+                                   % swingtime_settings.EVENT_MODEL)
+    return event_model
+
+
 def html_mark_safe(func):
     '''
     Decorator for functions return strings that should be treated as template
     safe.
-    
+
     '''
     def decorator(*args, **kws):
         return mark_safe(func(*args, **kws))
     return decorator
 
 
-#-------------------------------------------------------------------------------
 def time_delta_total_seconds(time_delta):
     '''
-    Calculate the total number of seconds represented by a 
+    Calculate the total number of seconds represented by a
     ``datetime.timedelta`` object
-    
+
     '''
     return time_delta.days * 3600 + time_delta.seconds
 
 
-#-------------------------------------------------------------------------------
 def month_boundaries(dt=None):
     '''
-    Return a 2-tuple containing the datetime instances for the first and last 
-    dates of the current month or using ``dt`` as a reference. 
-    
+    Return a 2-tuple containing the datetime instances for the first and last
+    dates of the current month or using ``dt`` as a reference.
+
     '''
     import calendar
     dt = dt or date.today()
@@ -49,71 +65,62 @@ def month_boundaries(dt=None):
     return (start, start + timedelta(ndays - 1))
 
 
-#-------------------------------------------------------------------------------
 def css_class_cycler():
     '''
     Return a dictionary keyed by ``EventType`` abbreviations, whose values are an
     iterable or cycle of CSS class names.
-    
+
     '''
     from swingtime.models import EventType
     return defaultdict(
         lambda: itertools.cycle(('evt-even', 'evt-odd')).next,
         ((e.abbr, itertools.cycle((
-             'evt-%s-even' % e.abbr, 
+             'evt-%s-even' % e.abbr,
              'evt-%s-odd' % e.abbr
              )).next) for e in EventType.objects.all()
         )
     )
 
 
-#===============================================================================
 class BaseOccurrenceProxy(object):
     '''
     A simple wrapper class for handling the presentational aspects of an
     ``Occurrence`` instance.
-    
+
     '''
-    #---------------------------------------------------------------------------
     def __init__(self, occurrence, col):
         self.column = col
         self._occurrence = occurrence
         self.event_class = ''
 
-    #---------------------------------------------------------------------------
     def __getattr__(self, name):
         return getattr(self._occurrence, name)
-        
-    #---------------------------------------------------------------------------
+
     def __unicode__(self):
         return self.title
 
 
-#===============================================================================
 class DefaultOccurrenceProxy(BaseOccurrenceProxy):
 
     CONTINUATION_STRING = '^'
-    
-    #---------------------------------------------------------------------------
+
     def __init__(self, *args, **kws):
         super(DefaultOccurrenceProxy, self).__init__(*args, **kws)
         link = '<a href="%s">%s</a>' % (
             self.get_absolute_url(),
             self.title
         )
-        
+
         self._str = itertools.chain(
             (link,),
             itertools.repeat(self.CONTINUATION_STRING)
         ).next
-        
-    #---------------------------------------------------------------------------
+
     @html_mark_safe
     def __unicode__(self):
         return self._str()
 
 
-#-------------------------------------------------------------------------------
 def create_timeslot_table(
     dt=None,
     items=None,
@@ -125,34 +132,34 @@ def create_timeslot_table(
     proxy_class=DefaultOccurrenceProxy
 ):
     '''
-    Create a grid-like object representing a sequence of times (rows) and 
-    columns where cells are either empty or reference a wrapper object for 
+    Create a grid-like object representing a sequence of times (rows) and
+    columns where cells are either empty or reference a wrapper object for
     event occasions that overlap a specific time slot.
-    
-    Currently, there is an assumption that if an occurrence has a ``start_time`` 
+
+    Currently, there is an assumption that if an occurrence has a ``start_time``
     that falls with the temporal scope of the grid, then that ``start_time`` will
     also match an interval in the sequence of the computed row entries.
-    
+
     * ``dt`` - a ``datetime.datetime`` instance or ``None`` to default to now
-    * ``items`` - a queryset or sequence of ``Occurrence`` instances. If 
+    * ``items`` - a queryset or sequence of ``Occurrence`` instances. If
       ``None``, default to the daily occurrences for ``dt``
-    * ``start_time`` - a ``datetime.time`` instance 
+    * ``start_time`` - a ``datetime.time`` instance
     * ``end_time_delta`` - a ``datetime.timedelta`` instance
     * ``time_delta`` - a ``datetime.timedelta`` instance
     * ``min_column`` - the minimum number of columns to show in the table
-    * ``css_class_cycles`` - if not ``None``, a callable returning a dictionary 
-      keyed by desired ``EventType`` abbreviations with values that iterate over 
+    * ``css_class_cycles`` - if not ``None``, a callable returning a dictionary
+      keyed by desired ``EventType`` abbreviations with values that iterate over
       progressive CSS class names for the particular abbreviation.
     * ``proxy_class`` - a wrapper class for accessing an ``Occurrence`` object.
       This class should also expose ``event_type`` and ``event_type`` attrs, and
       handle the custom output via its __unicode__ method.
-    
+
     '''
     from swingtime.models import Occurrence
     dt = dt or datetime.now()
     dtstart = datetime.combine(dt.date(), start_time)
     dtend = dtstart + end_time_delta
-    
+
     if isinstance(items, QuerySet):
         items = items._clone()
     elif not items:
@@ -180,9 +187,9 @@ def create_timeslot_table(
         if timeslot is None:
             # TODO fix atypical interval boundry spans
             # This is rather draconian, we should probably try to find a better
-            # way to indicate that this item actually occurred between 2 intervals
-            # and to account for the fact that this item may be spanning cells
-            # but on weird intervals
+            # way to indicate that this item actually occurred between 2
+            # intervals and to account for the fact that this item may be
+            # spanning cells  but on weird intervals
             continue
 
         colkey = 0
@@ -197,22 +204,22 @@ def create_timeslot_table(
                     row = timeslots.get(rowkey, None)
                     if row is None:
                         break
-                    
+
                     # we might want to put a sanity check in here to ensure that
-                    # we aren't trampling some other entry, but by virtue of 
+                    # we aren't trampling some other entry, but by virtue of
                     # sorting all occurrence that shouldn't happen
                     row[colkey] = proxy
                     current += time_delta
                 break
 
             colkey += 1
-            
+
     # determine the number of timeslot columns we should show
     column_lens = [len(x) for x in timeslots.itervalues()]
     column_count = max((min_columns, max(column_lens) if column_lens else 0))
     column_range = range(column_count)
     empty_columns = ['' for x in column_range]
-    
+
     if css_class_cycles:
         column_classes = dict([(i, css_class_cycles()) for i in column_range])
     else:
@@ -226,7 +233,8 @@ def create_timeslot_table(
             proxy = timeslots[rowkey][colkey]
             cols[colkey] = proxy
             if not proxy.event_class and column_classes:
-                proxy.event_class = column_classes[colkey][proxy.event_type.abbr]()
+                proxy.event_class = \
+                    column_classes[colkey][proxy.event_type.abbr]()
 
         table.append((rowkey, cols))
 
