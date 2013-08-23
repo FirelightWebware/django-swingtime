@@ -83,7 +83,8 @@ class AbstractEvent(models.Model):
         '''
         Convenience method wrapping ``Occasion.objects.daily_occasions``.
         '''
-        return Occasion.objects.daily_occasions(dt=dt, event=self)
+        return utils.get_occasion_model().objects \
+                    .daily_occasions(dt=dt, event=self)
 
 
 class OccasionManager(models.Manager):
@@ -122,13 +123,14 @@ class OccasionManager(models.Manager):
 
 
 class AbstractOccasion(models.Model):
-
     '''
     Represents the start end time for a specific occasion of a master
     ``Event`` object.
     '''
     start_time = models.DateTimeField(_('start time'))
     end_time = models.DateTimeField(_('end time'))
+    event = models.ForeignKey(swingtime_settings.EVENT_MODEL,
+                              related_name='occasions')
 
     objects = OccasionManager()
 
