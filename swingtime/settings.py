@@ -16,7 +16,7 @@ TIMESLOT_INTERVAL = getattr(
 
 # A datetime.time value indicting the starting time for time slot grids and
 # form selectors
-TIMESLOT_START_TIME = (
+TIMESLOT_START_TIME = getattr(
     settings, 'SWINGTIME_TIMESLOT_START_TIME', datetime.time(9)
 )
 
