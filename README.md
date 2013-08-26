@@ -1,3 +1,6 @@
+[Forker's notes: switched to eventtools for admin-friendliness wrt to recurring events]
+
+
 About Swingtime
 ===============
 
